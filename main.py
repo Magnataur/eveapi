@@ -93,7 +93,6 @@ class EveApi:
 
     @property
     def wallet_transactions(self):
-        result = []
         params = {
             'keyID': self.key_id,
             'vCode': self.v_code,
@@ -106,17 +105,14 @@ class EveApi:
             return ''
         xml_raw = response.read()
         root = etree.fromstring(xml_raw)
-        for n in root.iter('row'):
-            result.append(n.attrib)
-        return result
+        return [n.attrib for n in root.iter('row')]
 
     def marketstat(self, items):
         params = [
             ('usesystem', self.jita_id),
         ]
         result = {}
-        for i in items:
-            params.append(('typeid', i))
+        params += [('typeid', i) for i in items]
 
         data = urllib.parse.urlencode(params)
         response = urllib.request.urlopen(self.c('/api/marketstat'), data.encode())
@@ -141,12 +137,8 @@ def main():
     api = EveApi(name, key_id, v_code)
     print('Total balance: {}'.format(api.account_balance))
 
-    items = []
     transactions = api.wallet_transactions
-
-    for transaction in transactions:
-        items.append(transaction['typeID'])
-
+    items = [transaction['typeID'] for transaction in transactions]
     marketstat = api.marketstat(items)
 
     for n in transactions:
